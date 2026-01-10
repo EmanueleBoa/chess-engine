@@ -32,34 +32,15 @@ class MaterialEvaluator(Evaluator):
         return math.tanh(score / self.scale)
 
     def evaluate_material(self, board: chess.Board) -> float:
-        piece_values = {
-            chess.PAWN: 1.0,
-            chess.KNIGHT: self.knight_value,
-            chess.BISHOP: self.bishop_value,
-            chess.ROOK: self.rook_value,
-            chess.QUEEN: self.queen_value,
-            chess.KING: 0.0
-        }
-
         score = 0.0
-        for square in chess.SQUARES:
-            piece = board.piece_at(square)
-            if piece:
-                value = piece_values[piece.piece_type]
-                score += value if piece.color == board.turn else -value
-
+        score += len(board.pieces(chess.PAWN, board.turn))
+        score -= len(board.pieces(chess.PAWN, not board.turn))
+        score += len(board.pieces(chess.KNIGHT, board.turn)) * self.knight_value
+        score -= len(board.pieces(chess.KNIGHT, not board.turn)) * self.knight_value
+        score += len(board.pieces(chess.BISHOP, board.turn)) * self.bishop_value
+        score -= len(board.pieces(chess.BISHOP, not board.turn)) * self.bishop_value
+        score += len(board.pieces(chess.ROOK, board.turn)) * self.rook_value
+        score -= len(board.pieces(chess.ROOK, not board.turn)) * self.rook_value
+        score += len(board.pieces(chess.QUEEN, board.turn)) * self.queen_value
+        score -= len(board.pieces(chess.QUEEN, not board.turn)) * self.queen_value
         return score
-
-    # def evaluate_material(self, board: chess.Board) -> float:
-    #     score = 0.0
-    #     score += len(board.pieces(chess.PAWN, board.turn))
-    #     score -= len(board.pieces(chess.PAWN, not board.turn))
-    #     score += len(board.pieces(chess.KNIGHT, board.turn)) * self.knight_value
-    #     score -= len(board.pieces(chess.KNIGHT, not board.turn)) * self.knight_value
-    #     score += len(board.pieces(chess.BISHOP, board.turn)) * self.bishop_value
-    #     score -= len(board.pieces(chess.BISHOP, not board.turn)) * self.bishop_value
-    #     score += len(board.pieces(chess.ROOK, board.turn)) * self.rook_value
-    #     score -= len(board.pieces(chess.ROOK, not board.turn)) * self.rook_value
-    #     score += len(board.pieces(chess.QUEEN, board.turn)) * self.queen_value
-    #     score -= len(board.pieces(chess.QUEEN, not board.turn)) * self.queen_value
-    #     return score
