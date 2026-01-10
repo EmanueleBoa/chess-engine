@@ -1,21 +1,31 @@
 import math
+from typing import Optional, List
+
+import chess
 
 from engine.board import Board
 
 
 class Node:
+    """
+    MCTS Node using move/unmove pattern for efficiency.
+
+    Instead of storing a full board copy in each node, we only store the move.
+    The board state is reconstructed by applying moves from the root during tree traversal.
+    This eliminates expensive board.copy() calls during expansion.
+    """
     __slots__ = (
-        'board', 'parent', 'move', 'children', 'untried_moves',
+        'parent', 'move', 'children', 'untried_moves',
         'outcome', 'visits', 'log_visits', 'total_value', 'mean_value'
     )
-    
-    def __init__(self, board: Board, parent=None, move=None):
-        self.board = board
+
+    def __init__(self, parent: Optional["Node"] = None, move: Optional[chess.Move] = None,
+                 untried_moves: Optional[List[chess.Move]] = None, outcome: Optional[int] = None):
         self.parent = parent
         self.move = move
         self.children = []
-        self.outcome = board.get_outcome()
-        self.untried_moves = [] if self.outcome is not None else board.get_legal_moves()
+        self.untried_moves = untried_moves if untried_moves is not None else []
+        self.outcome = outcome
         self.visits: int = 0
         self.log_visits: float = 0.0
         self.total_value: float = 0.0
@@ -27,11 +37,15 @@ class Node:
     def is_terminal(self) -> bool:
         return self.outcome is not None
 
-    def expand(self) -> "Node":
+    def expand(self, board: Board) -> "Node":
         move = self.untried_moves.pop()
-        next_board = self.board.copy()
-        next_board.push(move)
-        child = Node(next_board, parent=self, move=move)
+        board.push(move)
+
+        # Check outcome and get legal moves for the new position
+        outcome = board.get_outcome()
+        untried_moves = [] if outcome is not None else board.get_legal_moves()
+
+        child = Node(parent=self, move=move, untried_moves=untried_moves, outcome=outcome)
         self.children.append(child)
         return child
 
@@ -46,14 +60,6 @@ class Node:
         if self.parent:
             self.parent.backpropagate(-value)
 
-    def tree_policy(self, exploration_strength: float = 1.0) -> "Node":
-        node = self
-        while not node.is_terminal():
-            if not node.is_fully_expanded():
-                return node.expand()
-            node = node.get_best_child(exploration_strength)
-        return node
-
     def uct(self, exploration_strength: float) -> float:
         return self.get_exploitation_term() + exploration_strength * self.get_exploration_term()
 
@@ -61,7 +67,7 @@ class Node:
         return math.sqrt(self.parent.log_visits / self.visits)
 
     def get_exploitation_term(self) -> float:
-        return - self.mean_value
+        return -self.mean_value
 
     def get_most_visited_child(self) -> "Node":
         return max(self.children, key=lambda node: node.visits)
