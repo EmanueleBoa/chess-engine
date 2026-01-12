@@ -1,6 +1,7 @@
 import math
+from typing import Optional
 
-from engine.board import Board
+import chess
 
 
 class Node:
@@ -8,14 +9,14 @@ class Node:
         'board', 'parent', 'move', 'children', 'untried_moves',
         'outcome', 'visits', 'log_visits', 'total_value', 'mean_value'
     )
-    
-    def __init__(self, board: Board, parent=None, move=None):
+
+    def __init__(self, board: chess.Board, parent=None, move=None):
         self.board = board
         self.parent = parent
         self.move = move
         self.children = []
-        self.outcome = board.get_outcome()
-        self.untried_moves = [] if self.outcome is not None else board.get_legal_moves()
+        self.outcome = self.get_outcome()
+        self.untried_moves = [] if self.outcome is not None else list(board.legal_moves)
         self.visits: int = 0
         self.log_visits: float = 0.0
         self.total_value: float = 0.0
@@ -65,3 +66,12 @@ class Node:
 
     def get_most_visited_child(self) -> "Node":
         return max(self.children, key=lambda node: node.visits)
+
+    def get_outcome(self) -> Optional[int]:
+        if self.board.is_checkmate():
+            return -1
+        if self.board.is_stalemate() or self.board.is_insufficient_material():
+            return 0
+        if self.board.is_fifty_moves() or self.board.is_repetition(3):
+            return 0
+        return None
