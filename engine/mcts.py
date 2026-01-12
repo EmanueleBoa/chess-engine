@@ -1,14 +1,18 @@
-from engine.board import Board
+import math
+
+import chess
+
 from engine.node import Node
 from heuristic.evaluator import Evaluator
 
 
 class MCTS:
-    def __init__(self, evaluator: Evaluator, exploration_strength: float = 1.0):
+    def __init__(self, evaluator: Evaluator, exploration_strength: float = 1.0, scale: float = 5.0):
         self.evaluator: Evaluator = evaluator
         self.exploration_strength: float = exploration_strength
+        self.scale: float = scale
 
-    def search_move(self, board: Board, iterations: int = 1000, print_stats: bool = False):
+    def get_best_move(self, board: chess.Board, iterations: int = 1000, print_stats: bool = False) -> chess.Move:
         root = Node(board)
 
         for _ in range(iterations):
@@ -26,4 +30,4 @@ class MCTS:
     def get_value(self, node: Node) -> float:
         if node.is_terminal():
             return node.outcome
-        return self.evaluator.evaluate(node.board)
+        return math.tanh(self.evaluator.evaluate_board(node.board) / self.scale)

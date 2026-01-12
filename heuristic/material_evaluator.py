@@ -1,21 +1,22 @@
-import math
 from typing import Dict
 
 import chess
 
-from engine.board import Board
 from heuristic.evaluator import Evaluator
 
 
 class MaterialEvaluator(Evaluator):
     def __init__(self, knight_value: float = 3, bishop_value: float = 3, rook_value: float = 5, queen_value: float = 9,
-                 scale: float = 5.0):
+                 king_value: float = 200):
         super().__init__()
-        self.knight_value = knight_value
-        self.bishop_value = bishop_value
-        self.rook_value = rook_value
-        self.queen_value = queen_value
-        self.scale = scale
+        self.piece_to_value: Dict[chess.PieceType, float] = {
+            chess.PAWN: 1,
+            chess.KNIGHT: knight_value,
+            chess.BISHOP: bishop_value,
+            chess.ROOK: rook_value,
+            chess.QUEEN: queen_value,
+            chess.KING: king_value,
+        }
 
     @classmethod
     def from_dict(cls, params: Dict[str, float]):
@@ -24,23 +25,28 @@ class MaterialEvaluator(Evaluator):
             bishop_value=params["bishop_value"],
             rook_value=params["rook_value"],
             queen_value=params["queen_value"],
-            scale=params["scale"]
+            king_value=params["king_value"]
         )
 
-    def evaluate(self, board: Board) -> float:
-        score = self.evaluate_material(board)
-        return math.tanh(score / self.scale)
-
-    def evaluate_material(self, board: chess.Board) -> float:
+    def evaluate_board(self, board: chess.Board) -> float:
         score = 0.0
-        score += len(board.pieces(chess.PAWN, board.turn))
-        score -= len(board.pieces(chess.PAWN, not board.turn))
-        score += len(board.pieces(chess.KNIGHT, board.turn)) * self.knight_value
-        score -= len(board.pieces(chess.KNIGHT, not board.turn)) * self.knight_value
-        score += len(board.pieces(chess.BISHOP, board.turn)) * self.bishop_value
-        score -= len(board.pieces(chess.BISHOP, not board.turn)) * self.bishop_value
-        score += len(board.pieces(chess.ROOK, board.turn)) * self.rook_value
-        score -= len(board.pieces(chess.ROOK, not board.turn)) * self.rook_value
-        score += len(board.pieces(chess.QUEEN, board.turn)) * self.queen_value
-        score -= len(board.pieces(chess.QUEEN, not board.turn)) * self.queen_value
+        for piece, value in self.piece_to_value.items():
+            score += len(board.pieces(piece, board.turn)) * value
+            score -= len(board.pieces(piece, not board.turn)) * value
         return score
+
+    def evaluate_move(self, board: chess.Board, move: chess.Move) -> float:
+        score = 0.0
+        if board.is_capture(move):
+            victim = board.piece_at(move.to_square)
+            attacker = board.piece_at(move.from_square)
+            if victim and attacker:
+                score += 10 * self.piece_to_value[victim.piece_type] - self.piece_to_value[attacker.piece_type]
+
+        if move.promotion:
+            score += self.piece_to_value[chess.QUEEN]
+
+        return score
+
+    def get_checkmate_score(self) -> float:
+        return self.piece_to_value[chess.KING]
