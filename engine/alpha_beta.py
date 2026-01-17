@@ -76,15 +76,16 @@ class AlphaBeta:
         if alpha < stand_pat:
             alpha = stand_pat
 
-        for move in board.generate_legal_captures():
-            board.push(move)
-            score = -self.quiescence_search(board, -beta, -alpha)
-            board.pop()
+        for move in self.order_moves(board):
+            if board.is_capture(move):
+                board.push(move)
+                score = -self.quiescence_search(board, -beta, -alpha)
+                board.pop()
 
-            if score >= beta:
-                return beta
-            if score > alpha:
-                alpha = score
+                if score >= beta:
+                    return beta
+                if score > alpha:
+                    alpha = score
         return alpha
 
     def order_moves(self, board: chess.Board) -> List[chess.Move]:
