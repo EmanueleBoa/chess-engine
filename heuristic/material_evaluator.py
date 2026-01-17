@@ -18,16 +18,6 @@ class MaterialEvaluator(Evaluator):
             chess.KING: king_value,
         }
 
-    @classmethod
-    def from_dict(cls, params: Dict[str, float]):
-        return cls(
-            knight_value=params["knight_value"],
-            bishop_value=params["bishop_value"],
-            rook_value=params["rook_value"],
-            queen_value=params["queen_value"],
-            king_value=params["king_value"]
-        )
-
     def evaluate_board(self, board: chess.Board) -> float:
         score = 0.0
         for piece, value in self.piece_to_value.items():

@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Dict
 
 import chess
 
@@ -27,6 +27,15 @@ class AlphaBeta:
             alpha = max(alpha, score)
 
         return best_move
+
+    def evaluate_root_moves(self, board: chess.Board, depth: int) -> Dict[chess.Move, float]:
+        scores = {}
+        for move in board.legal_moves:
+            board.push(move)
+            score = -self.negamax(board, depth - 1, -float('inf'), float('inf'))
+            board.pop()
+            scores[move] = score
+        return scores
 
     def negamax(self, board: chess.Board, depth: int, alpha: float, beta: float) -> float:
         if board.is_checkmate():
@@ -64,16 +73,15 @@ class AlphaBeta:
         if alpha < stand_pat:
             alpha = stand_pat
 
-        for move in self.order_moves(board):
-            if board.is_capture(move):
-                board.push(move)
-                score = -self.quiescence_search(board, -beta, -alpha)
-                board.pop()
+        for move in board.generate_legal_captures():
+            board.push(move)
+            score = -self.quiescence_search(board, -beta, -alpha)
+            board.pop()
 
-                if score >= beta:
-                    return beta
-                if score > alpha:
-                    alpha = score
+            if score >= beta:
+                return beta
+            if score > alpha:
+                alpha = score
         return alpha
 
     def order_moves(self, board: chess.Board) -> List[chess.Move]:
