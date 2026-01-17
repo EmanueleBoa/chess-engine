@@ -7,7 +7,7 @@ from heuristic.evaluator import Evaluator
 
 
 class MCTS:
-    def __init__(self, evaluator: Evaluator, exploration_strength: float = 1.0, scale: float = 5.0):
+    def __init__(self, evaluator: Evaluator, exploration_strength: float = 1.0, scale: float = 50.0):
         self.evaluator: Evaluator = evaluator
         self.exploration_strength: float = exploration_strength
         self.scale: float = scale

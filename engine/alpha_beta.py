@@ -4,6 +4,9 @@ import chess
 
 from heuristic.evaluator import Evaluator
 
+CHECKMATE_SCORE = 10000
+DRAW_SCORE = 0
+
 
 class AlphaBeta:
     def __init__(self, evaluator: Evaluator):
@@ -39,10 +42,10 @@ class AlphaBeta:
 
     def negamax(self, board: chess.Board, depth: int, alpha: float, beta: float) -> float:
         if board.is_checkmate():
-            return -(self.evaluator.get_checkmate_score() + depth)
+            return -(CHECKMATE_SCORE + depth)
 
         if board.is_stalemate() or board.is_insufficient_material():
-            return 0
+            return DRAW_SCORE
 
         if depth == 0:
             return self.quiescence_search(board, alpha, beta)
