@@ -28,4 +28,4 @@ class MaterialEvaluator(FeatureEvaluator):
         return score
 
     def get_piece_value(self, piece_type: chess.PieceType) -> float:
-        return self.piece_to_value[piece_type]
+        return self.piece_to_value.get(piece_type, 0.0)
