@@ -1,15 +1,32 @@
 from abc import ABC, abstractmethod
 
+import chess
+
 
 class Evaluator(ABC):
     @abstractmethod
-    def evaluate_board(self, board) -> float:
+    def evaluate_board(self, board: chess.Board) -> float:
+        """
+        Evaluate a chess position for the color to move.
+
+        Args:
+            board: The chess board to evaluate
+
+        Returns:
+            A float score representing the evaluation of the board for the color to move
+        """
         pass
 
     @abstractmethod
-    def evaluate_move(self, board, move) -> float:
-        pass
+    def evaluate_move(self, board: chess.Board, move: chess.Move) -> float:
+        """
+        Evaluate a chess move for the color to move.
 
-    @abstractmethod
-    def get_checkmate_score(self) -> float:
+        Args:
+            board: The chess board to evaluate
+            move: The move to evaluate
+
+        Returns:
+            A float score representing the evaluation of the move for the color to move
+        """
         pass
