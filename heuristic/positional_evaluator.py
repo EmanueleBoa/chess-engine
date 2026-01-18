@@ -24,10 +24,9 @@ class PositionalEvaluator(Evaluator):
         self.king_safety_evaluator = king_safety_evaluator
         self.strategic_bonus_evaluator = strategic_bonus_evaluator
         self.piece_square_evaluator = piece_square_evaluator
-        self.phase_evaluator = PhaseEvaluator()
 
     def evaluate_board(self, board: chess.Board) -> float:
-        phase_value = self.phase_evaluator.evaluate(board, board.turn)
+        phase_value = PhaseEvaluator.evaluate(board)
         own_score = self._get_color_score(board, board.turn, phase_value)
         enemy_score = self._get_color_score(board, not board.turn, phase_value)
         return own_score - enemy_score
