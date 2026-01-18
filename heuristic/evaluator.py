@@ -20,13 +20,13 @@ class Evaluator(ABC):
     @abstractmethod
     def evaluate_move(self, board: chess.Board, move: chess.Move) -> float:
         """
-        Evaluate a chess move for the color to move.
+        Evaluate a chess move from the given board.
 
         Args:
             board: The chess board to evaluate
             move: The move to evaluate
 
         Returns:
-            A float score representing the evaluation of the move for the color to move
+            A float score representing the evaluation of the move
         """
         pass

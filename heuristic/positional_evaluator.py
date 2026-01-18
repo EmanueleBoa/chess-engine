@@ -32,6 +32,9 @@ class PositionalEvaluator(Evaluator):
         return own_score - enemy_score
 
     def evaluate_move(self, board: chess.Board, move: chess.Move) -> float:
+        """
+        Captures (MVV-LVA) and promotions are prioritized.
+        """
         score = 0.0
         if board.is_capture(move):
             victim_piece = board.piece_at(move.to_square)

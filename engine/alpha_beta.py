@@ -91,7 +91,6 @@ class AlphaBeta:
     def order_moves(self, board: chess.Board) -> List[chess.Move]:
         """
         Ranks moves to evaluate the most promising ones first.
-        Captures are prioritized (MVV-LVA).
         """
         moves = list(board.legal_moves)
         return sorted(moves, key=lambda move: self.evaluator.evaluate_move(board, move), reverse=True)
