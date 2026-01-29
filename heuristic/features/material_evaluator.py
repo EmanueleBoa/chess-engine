@@ -14,7 +14,7 @@ QUEEN_VALUE = 900
 class MaterialEvaluator(FeatureEvaluator):
     def __init__(self, params: Dict[str, float]):
         self.piece_to_value: Dict[chess.PieceType, float] = {
-            chess.PAWN: PAWN_VALUE,
+            chess.PAWN: params.get("pawn_value", PAWN_VALUE),
             chess.KNIGHT: params.get("knight_value", KNIGHT_VALUE),
             chess.BISHOP: params.get("bishop_value", BISHOP_VALUE),
             chess.ROOK: params.get("rook_value", ROOK_VALUE),
