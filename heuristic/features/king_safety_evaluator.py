@@ -36,7 +36,7 @@ class KingSafetyEvaluator(FeatureEvaluator):
         king_file = chess.square_file(king_square)
         king_rank = chess.square_rank(king_square)
 
-        penalty = self.get_king_attacked_penalty_fast(board, color, king_square)
+        penalty = self.get_king_attacked_penalty(board, color, king_square)
         score = -penalty * self.attacked_weight
 
         if is_central_file(king_file) or is_king_too_advanced(king_rank, color):
@@ -52,7 +52,7 @@ class KingSafetyEvaluator(FeatureEvaluator):
         return phase_value * score
 
     @staticmethod
-    def get_king_attacked_penalty_fast(board: chess.Board, color: bool, king_square: chess.Square):
+    def get_king_attacked_penalty(board: chess.Board, color: bool, king_square: chess.Square):
         enemy_color = not color
         king_zone_mask = chess.BB_KING_ATTACKS[king_square]
 
