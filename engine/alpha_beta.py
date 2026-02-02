@@ -11,7 +11,6 @@ DRAW_SCORE = 0
 class AlphaBeta:
     def __init__(self, evaluator: Evaluator):
         self.evaluator: Evaluator = evaluator
-        self.transposition_table: Dict[int, dict] = {}
 
     def get_best_move(self, board: chess.Board, depth: int = 3) -> chess.Move:
         best_move = None
@@ -21,10 +20,6 @@ class AlphaBeta:
 
         for move in self.order_moves(board):
             board.push(move)
-            # if board.can_claim_draw():
-            #     score = -CHECKMATE_SCORE
-            # else:
-            #     score = -self.negamax(board, depth - 1, -beta, -alpha)
             score = -self.negamax(board, depth - 1, -beta, -alpha)
             board.pop()
 
