@@ -29,82 +29,82 @@ class PawnStructureEvaluator(FeatureEvaluator):
         self.phalanx_mg = params.get("pawn_phalanx_mg", PAWN_PHALANX_MG)
         self.phalanx_eg = params.get("pawn_phalanx_eg", PAWN_PHALANX_EG)
 
+        self.front_spans = {chess.WHITE: [0] * 64, chess.BLACK: [0] * 64}
+        self.support_masks = {chess.WHITE: [0] * 64, chess.BLACK: [0] * 64}
+
+        self._precompute_masks()
+
     def evaluate(self, board: chess.Board, color: bool, *, phase_value: float = 1.0) -> float:
-        pawn_mask = int(board.pieces(chess.PAWN, color))
-        enemy_pawn_mask = int(board.pieces(chess.PAWN, not color))
-        bb_files = list(chess.BB_FILES)
+        pawns = board.pawns & board.occupied_co[color]
+        enemy_pawns = board.pawns & board.occupied_co[not color]
 
         mg_score = 0.0
         eg_score = 0.0
-        for square in board.pieces(chess.PAWN, color):
-            file, rank = chess.square_file(square), chess.square_rank(square)
+
+        file_occupancy = self._get_file_occupancy(pawns)
+
+        color_front_spans = self.front_spans[color]
+        color_support_masks = self.support_masks[color]
+
+        for square in chess.scan_forward(pawns):
+            file = chess.square_file(square)
+            rank = chess.square_rank(square)
             relative_rank = rank if color == chess.WHITE else 7 - rank
 
-            if self._is_passed(file, rank, enemy_pawn_mask, color, bb_files):
+            if not (color_front_spans[square] & enemy_pawns):
                 mg_score += (relative_rank ** 2) * self.passed_mg
                 eg_score += (relative_rank ** 2) * self.passed_eg
 
-            if self._is_isolated(file, pawn_mask, bb_files):
+            adjacent_files_mask = 0
+            if file > 0: adjacent_files_mask |= (1 << (file - 1))
+            if file < 7: adjacent_files_mask |= (1 << (file + 1))
+            if not (adjacent_files_mask & file_occupancy):
                 mg_score -= self.isolated_mg
                 eg_score -= self.isolated_eg
 
-            if self._is_doubled(file, pawn_mask, bb_files):
+            if (chess.BB_FILES[file] & pawns).bit_count() > 1:
                 mg_score -= self.doubled_mg
                 eg_score -= self.doubled_eg
 
-            if self._is_connected(square, pawn_mask, color):
-                bonus_multiplier = 1.0 + (relative_rank / 7.0)
+            if color_support_masks[square] & pawns:
+                bonus_multiplier = (1.0 + (relative_rank / 7.0))
                 mg_score += self.connected_mg * bonus_multiplier
                 eg_score += self.connected_eg * bonus_multiplier
 
-            if self._is_phalanx(square, pawn_mask):
-                mg_score += self.phalanx_mg
-                eg_score += self.phalanx_eg
+        phalanxes = pawns & (pawns << 1) & ~chess.BB_FILE_A
+        num_phalanx = phalanxes.bit_count()
+        mg_score += num_phalanx * self.phalanx_mg
+        eg_score += num_phalanx * self.phalanx_eg
 
         return phase_value * mg_score + (1 - phase_value) * eg_score
 
     @staticmethod
-    def _is_passed(file, rank, enemy_pawns, color, bb_files) -> bool:
-        for adjacent_file in range(max(0, file - 1), min(7, file + 1) + 1):
-            file_mask = int(bb_files[adjacent_file])
-            if color == chess.WHITE:
-                stop_mask = file_mask & ~((1 << (8 * (rank + 1))) - 1)
-            else:
-                stop_mask = file_mask & ((1 << (8 * rank)) - 1)
-            if stop_mask & enemy_pawns: return False
-        return True
+    def _get_file_occupancy(pawns: int) -> int:
+        occupancy = 0
+        for i in range(8):
+            if pawns & chess.BB_FILES[i]:
+                occupancy |= (1 << i)
+        return occupancy
 
-    @staticmethod
-    def _is_isolated(file, pawn_mask, bb_files) -> bool:
-        adjacent_files = 0
-        if file > 0: adjacent_files |= int(bb_files[file - 1])
-        if file < 7: adjacent_files |= int(bb_files[file + 1])
-        return not (adjacent_files & pawn_mask)
+    def _precompute_masks(self):
+        for square in range(64):
+            file = chess.square_file(square)
+            rank = chess.square_rank(square)
 
-    @staticmethod
-    def _is_doubled(file, pawn_mask, bb_files) -> bool:
-        return (int(bb_files[file]) & pawn_mask).bit_count() > 1
+            adjacent_files = chess.BB_FILES[file]
+            if file > 0: adjacent_files |= chess.BB_FILES[file - 1]
+            if file < 7: adjacent_files |= chess.BB_FILES[file + 1]
 
-    @staticmethod
-    def _is_connected(square, pawn_mask, color) -> bool:
-        file = chess.square_file(square)
-        support_rank = chess.square_rank(square) - (1 if color == chess.WHITE else -1)
+            self.front_spans[chess.WHITE][square] = adjacent_files & ~((1 << (8 * (rank + 1))) - 1)
+            self.front_spans[chess.BLACK][square] = adjacent_files & ((1 << (8 * rank)) - 1)
 
-        if support_rank < 0 or support_rank > 7:
-            return False
+            for color in [chess.WHITE, chess.BLACK]:
+                support_mask = 0
+                rank_offset = -1 if color == chess.WHITE else 1
+                support_rank = rank + rank_offset
 
-        for adjacent_file in [file - 1, file + 1]:
-            if 0 <= adjacent_file <= 7:
-                if (1 << chess.square(adjacent_file, support_rank)) & pawn_mask:
-                    return True
-        return False
+                if 0 <= support_rank <= 7:
+                    if file > 0: support_mask |= (1 << chess.square(file - 1, support_rank))
+                    if file < 7: support_mask |= (1 << chess.square(file + 1, support_rank))
 
-    @staticmethod
-    def _is_phalanx(square, pawn_mask) -> bool:
-        file = chess.square_file(square)
-        rank = chess.square_rank(square)
-        # We only check the right side to avoid double-counting the pair
-        if file < 7:
-            if (1 << chess.square(file + 1, rank)) & pawn_mask:
-                return True
-        return False
+                self.support_masks[color][square] = support_mask
