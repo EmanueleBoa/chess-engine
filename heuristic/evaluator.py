@@ -30,3 +30,17 @@ class Evaluator(ABC):
             A float score representing the evaluation of the move
         """
         pass
+
+    @abstractmethod
+    def evaluate_capture(self, board: chess.Board, move: chess.Move) -> float:
+        """
+        Evaluate a chess capture from the given board.
+
+        Args:
+            board: The chess board to evaluate
+            move: The move to evaluate
+
+        Returns:
+            A float score representing the evaluation of the move
+        """
+        pass

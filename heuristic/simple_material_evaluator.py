@@ -19,17 +19,21 @@ class SimpleMaterialEvaluator(Evaluator):
         """
         score = 0.0
         if board.is_capture(move):
-            victim_piece = board.piece_at(move.to_square)
-            attacker_piece = board.piece_at(move.from_square)
-            if victim_piece and attacker_piece:
-                victim_value = self._get_piece_value(victim_piece.piece_type)
-                attacker_value = self._get_piece_value(attacker_piece.piece_type)
-                score += 10 * victim_value - attacker_value
+            score += self.evaluate_capture(board, move)
 
         if move.promotion:
             score += self._get_piece_value(chess.QUEEN)
 
         return score
+
+    def evaluate_capture(self, board: chess.Board, move: chess.Move) -> float:
+        victim_piece = board.piece_at(move.to_square)
+        attacker_piece = board.piece_at(move.from_square)
+        if victim_piece and attacker_piece:
+            victim_value = self._get_piece_value(victim_piece.piece_type)
+            attacker_value = self._get_piece_value(attacker_piece.piece_type)
+            return 10 * victim_value - attacker_value
+        return 0.0
 
     def _get_piece_value(self, piece_type: chess.PieceType) -> float:
         return self.material_evaluator.get_piece_value(piece_type)
