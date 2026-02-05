@@ -31,28 +31,6 @@ class PositionalEvaluator(Evaluator):
         enemy_score = self._get_color_score(board, not board.turn, phase_value)
         return own_score - enemy_score
 
-    def evaluate_move(self, board: chess.Board, move: chess.Move) -> float:
-        """
-        Captures (MVV-LVA) and promotions are prioritized.
-        """
-        score = 0.0
-        if board.is_capture(move):
-            score += self.evaluate_capture(board, move)
-
-        if move.promotion:
-            score += self._get_piece_value(chess.QUEEN)
-
-        return score
-
-    def evaluate_capture(self, board: chess.Board, move: chess.Move) -> float:
-        victim_piece = board.piece_at(move.to_square)
-        attacker_piece = board.piece_at(move.from_square)
-        if victim_piece and attacker_piece:
-            victim_value = self._get_piece_value(victim_piece.piece_type)
-            attacker_value = self._get_piece_value(attacker_piece.piece_type)
-            return 10 * victim_value - attacker_value
-        return 0.0
-
     def _get_color_score(self, board: chess.Board, color: bool, phase_value: float) -> float:
         score = 0.0
         score += self.material_evaluator.evaluate(board, color)
@@ -62,6 +40,3 @@ class PositionalEvaluator(Evaluator):
         score += self.strategic_bonus_evaluator.evaluate(board, color)
         score += self.piece_square_evaluator.evaluate(board, color, phase_value=phase_value)
         return score
-
-    def _get_piece_value(self, piece_type: chess.PieceType) -> float:
-        return self.material_evaluator.get_piece_value(piece_type)
