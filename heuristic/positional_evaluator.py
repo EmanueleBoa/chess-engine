@@ -33,10 +33,10 @@ class PositionalEvaluator(Evaluator):
 
     def _get_color_score(self, board: chess.Board, color: bool, phase_value: float) -> float:
         score = 0.0
-        score += self.material_evaluator.evaluate(board, color)
+        score += self.material_evaluator.evaluate(board, color, phase_value=phase_value)
         score += self.piece_mobility_evaluator.evaluate(board, color, phase_value=phase_value)
         score += self.pawn_structure_evaluator.evaluate(board, color, phase_value=phase_value)
         score += self.king_safety_evaluator.evaluate(board, color, phase_value=phase_value)
-        score += self.strategic_bonus_evaluator.evaluate(board, color)
+        score += self.strategic_bonus_evaluator.evaluate(board, color, phase_value=phase_value)
         score += self.piece_square_evaluator.evaluate(board, color, phase_value=phase_value)
         return score

@@ -84,28 +84,31 @@ KING_ENDGAME_TABLE = list(reversed([
 
 class PieceSquareEvaluator(FeatureEvaluator):
     def __init__(self, params: Dict[str, List[float]]):
-        self.pst_tables: Dict[chess.PieceType, List[float]] = {
-            chess.PAWN: params.get("pawn_square_table", PAWN_TABLE),
-            chess.KNIGHT: params.get("knight_square_table", KNIGHT_TABLE),
-            chess.BISHOP: params.get("bishop_square_table", BISHOP_TABLE),
-            chess.ROOK: params.get("rook_square_table", ROOK_TABLE),
-            chess.QUEEN: params.get("queen_square_table", QUEEN_TABLE),
-            chess.KING: params.get("king_square_table", KING_TABLE)
+        self.pst_tables_mg: Dict[chess.PieceType, List[float]] = {
+            chess.PAWN: params.get("pawn_square_table_mg", PAWN_TABLE),
+            chess.KNIGHT: params.get("knight_square_table_mg", KNIGHT_TABLE),
+            chess.BISHOP: params.get("bishop_square_table_mg", BISHOP_TABLE),
+            chess.ROOK: params.get("rook_square_table_mg", ROOK_TABLE),
+            chess.QUEEN: params.get("queen_square_table_mg", QUEEN_TABLE),
+            chess.KING: params.get("king_square_table_mg", KING_TABLE)
         }
-        self.king_endgame_table: List[float] = params.get("king_endgame_square_table", KING_ENDGAME_TABLE)
+        self.pst_tables_eg: Dict[chess.PieceType, List[float]] = {
+            chess.PAWN: params.get("pawn_square_table_eg", PAWN_TABLE),
+            chess.KNIGHT: params.get("knight_square_table_eg", KNIGHT_TABLE),
+            chess.BISHOP: params.get("bishop_square_table_eg", BISHOP_TABLE),
+            chess.ROOK: params.get("rook_square_table_eg", ROOK_TABLE),
+            chess.QUEEN: params.get("queen_square_table_eg", QUEEN_TABLE),
+            chess.KING: params.get("king_square_table_eg", KING_ENDGAME_TABLE)
+        }
 
     def evaluate(self, board: chess.Board, color: bool, *, phase_value: float = 1.0) -> float:
         score = 0.0
 
-        # Process non-king pieces
-        for piece_type in [chess.PAWN, chess.KNIGHT, chess.BISHOP, chess.ROOK, chess.QUEEN]:
+        for piece_type in [chess.PAWN, chess.KNIGHT, chess.BISHOP, chess.ROOK, chess.QUEEN, chess.KING]:
             for square in board.pieces(piece_type, color):
                 idx = square if color == chess.WHITE else square ^ 56
-                score += self.pst_tables[piece_type][idx]
-
-        # Process king with phase interpolation
-        for square in board.pieces(chess.KING, color):
-            idx = square if color == chess.WHITE else square ^ 56
-            score += phase_value * self.pst_tables[chess.KING][idx] + (1 - phase_value) * self.king_endgame_table[idx]
+                mg_score = self.pst_tables_mg[piece_type][idx]
+                eg_score = self.pst_tables_eg[piece_type][idx]
+                score += phase_value * mg_score + (1 - phase_value) * eg_score
 
         return score

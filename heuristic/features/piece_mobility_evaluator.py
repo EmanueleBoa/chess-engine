@@ -12,16 +12,25 @@ MOBILITY_QUEEN = 1
 
 class PieceMobilityEvaluator(FeatureEvaluator):
     def __init__(self, params: Dict[str, float]):
-        self.piece_to_weight: Dict[chess.PieceType, float] = {
-            chess.KNIGHT: params.get("mobility_knight", MOBILITY_KNIGHT),
-            chess.BISHOP: params.get("mobility_bishop", MOBILITY_BISHOP),
-            chess.ROOK: params.get("mobility_rook", MOBILITY_ROOK),
-            chess.QUEEN: params.get("mobility_queen", MOBILITY_QUEEN)
+        self.piece_to_weight_mg: Dict[chess.PieceType, float] = {
+            chess.KNIGHT: params.get("mobility_knight_mg", MOBILITY_KNIGHT),
+            chess.BISHOP: params.get("mobility_bishop_mg", MOBILITY_BISHOP),
+            chess.ROOK: params.get("mobility_rook_mg", MOBILITY_ROOK),
+            chess.QUEEN: params.get("mobility_queen_mg", MOBILITY_QUEEN)
+        }
+        self.piece_to_weight_eg: Dict[chess.PieceType, float] = {
+            chess.KNIGHT: params.get("mobility_knight_eg", MOBILITY_KNIGHT),
+            chess.BISHOP: params.get("mobility_bishop_eg", MOBILITY_BISHOP),
+            chess.ROOK: params.get("mobility_rook_eg", MOBILITY_ROOK),
+            chess.QUEEN: params.get("mobility_queen_eg", MOBILITY_QUEEN)
         }
 
     def evaluate(self, board: chess.Board, color: bool, *, phase_value: float = 1.0) -> float:
-        score = 0.0
-        for piece_type, mobility_weight in self.piece_to_weight.items():
+        mg_score = 0.0
+        eg_score = 0.0
+        for piece_type in [chess.KNIGHT, chess.BISHOP, chess.ROOK, chess.QUEEN]:
             for square in board.pieces(piece_type, color):
-                score += len(board.attacks(square)) * mobility_weight
-        return phase_value * score
+                mobility = len(board.attacks(square))
+                mg_score += mobility * self.piece_to_weight_mg[piece_type]
+                eg_score += mobility * self.piece_to_weight_eg[piece_type]
+        return phase_value * mg_score + (1 - phase_value) * eg_score
