@@ -3,7 +3,6 @@ from typing import Dict
 import chess
 
 from heuristic.features.feature_evaluator import FeatureEvaluator
-from heuristic.features.utils import is_outpost  # Assuming this is optimized
 
 BISHOP_PAIR = 40
 ROOK_OPEN = 20
@@ -12,6 +11,8 @@ KNIGHT_OUTPOST = 35
 BAD_BISHOP = 15.0
 TRAPPED_PIECE = 50.0
 ROOK_BATTERY = 25.0
+ROOK_CONNECTION = 25.0
+PIECE_ANCHOR = 15.0
 
 LIGHT_SQUARES = chess.BB_LIGHT_SQUARES
 DARK_SQUARES = chess.BB_DARK_SQUARES
@@ -26,13 +27,15 @@ class StrategicBonusEvaluator(FeatureEvaluator):
         self.bad_bishop = params.get("bad_bishop", BAD_BISHOP)
         self.trapped_piece = params.get("trapped_piece", TRAPPED_PIECE)
         self.rook_battery = params.get("rook_battery", ROOK_BATTERY)
+        self.rook_connection = params.get("rook_connection", ROOK_CONNECTION)
+        self.piece_anchor = params.get("piece_anchor", PIECE_ANCHOR)
 
         self.seventh_rank_mask = {
             chess.WHITE: chess.BB_RANK_7,
             chess.BLACK: chess.BB_RANK_2
         }
 
-    def evaluate(self, board: chess.Board, color: bool, **kwargs) -> float:
+    def evaluate(self, board: chess.Board, color: bool, *, phase_value: float = 1.0) -> float:
         score = 0.0
 
         own_pieces = board.occupied_co[color]
@@ -40,15 +43,36 @@ class StrategicBonusEvaluator(FeatureEvaluator):
         knights = board.knights & own_pieces
         bishops = board.bishops & own_pieces
         rooks = board.rooks & own_pieces
-
         enemy_pawns = board.pawns & board.occupied_co[not color]
+
+        pawn_attacks = 0
+        for pawn_sq in chess.scan_forward(pawns):
+            pawn_attacks |= chess.BB_PAWN_ATTACKS[color][pawn_sq]
+
+        enemy_pawn_attacks = 0
+        for ep_sq in chess.scan_forward(enemy_pawns):
+            enemy_pawn_attacks |= chess.BB_PAWN_ATTACKS[not color][ep_sq]
+
+        minor_pieces = knights | bishops
+        for square in chess.scan_forward(minor_pieces):
+            piece_status_score = 0.0
+            is_anchored = bool(pawn_attacks & (1 << square))
+            is_knight = bool((1 << square) & knights)
+
+            if is_anchored:
+                piece_status_score += self.piece_anchor
+
+                if is_knight:
+                    rank = chess.square_rank(square)
+                    rel_rank = rank if color == chess.WHITE else 7 - rank
+                    if 3 <= rel_rank <= 5:
+                        if not (enemy_pawn_attacks & (1 << square)):
+                            piece_status_score += self.knight_outpost
+
+            score += piece_status_score * phase_value
 
         if bishops.bit_count() >= 2:
             score += self.bishop_pair
-
-        for square in chess.scan_forward(knights):
-            if is_outpost(board, square, color):
-                score += self.knight_outpost
 
         rank_7_mask = self.seventh_rank_mask[color]
         for square in chess.scan_forward(rooks):
@@ -88,10 +112,20 @@ class StrategicBonusEvaluator(FeatureEvaluator):
                 if (occupied & (1 << chess.F8)):
                     score -= self.trapped_piece
 
-        if rooks.bit_count() >= 2:
-            for square in chess.scan_forward(rooks):
+        num_rooks = rooks.bit_count()
+        if num_rooks >= 2:
+            rook_squares = list(chess.scan_forward(rooks))
+            for square in rook_squares:
                 file_mask = chess.BB_FILES[chess.square_file(square)]
                 if board.attacks(square) & rooks & file_mask:
-                    score += self.rook_battery / 2.0
+                    score += self.rook_battery / 2.0 * phase_value
+
+            square1 = rook_squares[0]
+            square2 = rook_squares[1]
+            back_rank = 0 if color == chess.WHITE else 7
+            if chess.square_rank(square1) == back_rank and chess.square_rank(square2) == back_rank:
+                between_mask = chess.between(square1, square2)
+                if not (between_mask & board.occupied):
+                    score += self.rook_connection * phase_value
 
         return score
