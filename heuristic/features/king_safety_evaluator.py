@@ -40,7 +40,7 @@ class KingSafetyEvaluator(FeatureEvaluator):
         score = -penalty * self.attacked_weight
 
         if is_central_file(king_file) or is_king_too_advanced(king_rank, color):
-            return score
+            return phase_value * score
 
         shield_mask = self.shield_masks[color][king_square]
         friendly_pawns = board.pawns & board.occupied_co[color]
@@ -69,7 +69,7 @@ class KingSafetyEvaluator(FeatureEvaluator):
         if num_attackers <= 1:
             return 0
 
-        return num_attackers * total_attack_units
+        return num_attackers * num_attackers * total_attack_units
 
     def _precompute_shields(self):
         for square in range(64):
