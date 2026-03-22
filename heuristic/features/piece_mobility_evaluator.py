@@ -25,7 +25,7 @@ class PieceMobilityEvaluator(FeatureEvaluator):
             chess.QUEEN: params.get("mobility_queen_eg", MOBILITY_QUEEN)
         }
 
-    def evaluate(self, board: chess.Board, color: bool, *, phase_value: float = 1.0) -> float:
+    def evaluate(self, board: chess.Board, color: bool, phase_value: float = 1.0) -> float:
         mg_score = 0.0
         eg_score = 0.0
         for piece_type in [chess.KNIGHT, chess.BISHOP, chess.ROOK, chess.QUEEN]:

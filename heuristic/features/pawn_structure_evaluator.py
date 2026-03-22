@@ -34,7 +34,7 @@ class PawnStructureEvaluator(FeatureEvaluator):
 
         self._precompute_masks()
 
-    def evaluate(self, board: chess.Board, color: bool, *, phase_value: float = 1.0) -> float:
+    def evaluate(self, board: chess.Board, color: bool, phase_value: float = 1.0) -> float:
         pawns = board.pawns & board.occupied_co[color]
         enemy_pawns = board.pawns & board.occupied_co[not color]
 

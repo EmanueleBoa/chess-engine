@@ -28,7 +28,7 @@ class MaterialEvaluator(FeatureEvaluator):
             chess.QUEEN: params.get("queen_value_eg", QUEEN_VALUE)
         }
 
-    def evaluate(self, board: chess.Board, color: bool, *, phase_value: float = 1.0) -> float:
+    def evaluate(self, board: chess.Board, color: bool, phase_value: float = 1.0) -> float:
         score = 0.0
         for piece in self.piece_to_value_mg.keys():
             piece_count = len(board.pieces(piece, color))

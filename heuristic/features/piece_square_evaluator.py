@@ -101,7 +101,7 @@ class PieceSquareEvaluator(FeatureEvaluator):
             chess.KING: params.get("king_square_table_eg", KING_ENDGAME_TABLE)
         }
 
-    def evaluate(self, board: chess.Board, color: bool, *, phase_value: float = 1.0) -> float:
+    def evaluate(self, board: chess.Board, color: bool, phase_value: float = 1.0) -> float:
         score = 0.0
 
         for piece_type in [chess.PAWN, chess.KNIGHT, chess.BISHOP, chess.ROOK, chess.QUEEN, chess.KING]:

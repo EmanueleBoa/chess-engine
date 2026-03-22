@@ -28,7 +28,7 @@ class KingSafetyEvaluator(FeatureEvaluator):
         self.shield_masks = {chess.WHITE: [0] * 64, chess.BLACK: [0] * 64}
         self._precompute_shields()
 
-    def evaluate(self, board: chess.Board, color: bool, *, phase_value: float = 1.0) -> float:
+    def evaluate(self, board: chess.Board, color: bool, phase_value: float = 1.0) -> float:
         if phase_value < PHASE_MINIMUM_VALUE:
             return 0
 

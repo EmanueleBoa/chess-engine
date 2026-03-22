@@ -42,7 +42,7 @@ class StrategicBonusEvaluator(FeatureEvaluator):
             chess.BLACK: chess.BB_RANK_2
         }
 
-    def evaluate(self, board: chess.Board, color: bool, *, phase_value: float = 1.0) -> float:
+    def evaluate(self, board: chess.Board, color: bool, phase_value: float = 1.0) -> float:
         score = 0.0
 
         own_pieces = board.occupied_co[color]

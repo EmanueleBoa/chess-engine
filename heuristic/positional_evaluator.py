@@ -1,6 +1,7 @@
 import chess
 
 from heuristic.evaluator import Evaluator
+from heuristic.features.king_endgame_evaluator import KingEndgameEvaluator
 from heuristic.features.king_safety_evaluator import KingSafetyEvaluator
 from heuristic.features.material_evaluator import MaterialEvaluator
 from heuristic.features.pawn_structure_evaluator import PawnStructureEvaluator
@@ -17,12 +18,14 @@ class PositionalEvaluator(Evaluator):
                  pawn_structure_evaluator: PawnStructureEvaluator,
                  king_safety_evaluator: KingSafetyEvaluator,
                  strategic_bonus_evaluator: StrategicBonusEvaluator,
+                 king_endgame_evaluator: KingEndgameEvaluator,
                  piece_square_evaluator: PieceSquareEvaluator):
         self.material_evaluator = material_evaluator
         self.piece_mobility_evaluator = piece_mobility_evaluator
         self.pawn_structure_evaluator = pawn_structure_evaluator
         self.king_safety_evaluator = king_safety_evaluator
         self.strategic_bonus_evaluator = strategic_bonus_evaluator
+        self.king_endgame_evaluator = king_endgame_evaluator
         self.piece_square_evaluator = piece_square_evaluator
 
     def evaluate_board(self, board: chess.Board) -> float:
@@ -38,5 +41,6 @@ class PositionalEvaluator(Evaluator):
         score += self.pawn_structure_evaluator.evaluate(board, color, phase_value=phase_value)
         score += self.king_safety_evaluator.evaluate(board, color, phase_value=phase_value)
         score += self.strategic_bonus_evaluator.evaluate(board, color, phase_value=phase_value)
+        score += self.king_endgame_evaluator.evaluate(board, color, phase_value=phase_value)
         score += self.piece_square_evaluator.evaluate(board, color, phase_value=phase_value)
         return score
